@@ -1,4 +1,3 @@
-<!--(c) adarsh-goel-->
 <!DOCTYPE html>
 <html lang="en">
 
@@ -8,32 +7,36 @@
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>%s</title>
-    <link rel="stylesheet" type='text/css' href="https://adarsh-goel.github.io/resources/style.css">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Raleway">
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Delius">
-    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
 
+    <!-- Tailwind CSS CDN link -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- External styles (optional) -->
+    <link rel="stylesheet" href="https://cdn.plyr.io/3.6.12/plyr.css" />
 </head>
 
-<body>
-    <header>
-        <div class="toogle"></div>
-        <div id="file-name">
-            <marquee direction="left"> %s</marquee>
+<body class="bg-gray-100 text-gray-900 font-sans transition-all">
+    <header class="bg-blue-600 p-4 text-white">
+        <div class="flex justify-between items-center">
+            <div class="toogle cursor-pointer p-2 bg-gray-800 text-white rounded-full hover:bg-gray-700 transition">
+                <!-- Dark mode toggle icon -->
+                <span class="text-xl">🌙</span>
+            </div>
+            <div id="file-name" class="overflow-hidden text-ellipsis whitespace-nowrap">
+                <marquee direction="left" class="font-bold text-lg px-4 py-2"> %s</marquee>
+            </div>
         </div>
     </header>
 
-    <div class="container">
-        <tag src="%s" class="player"></tag>
+    <div class="container mx-auto mt-6 px-4">
+        <div class="bg-white p-4 rounded-lg shadow-lg max-w-4xl mx-auto">
+            <tag src="%s" class="player w-full"></tag>
+        </div>
     </div>
 
-    <footer>
-        <span>
-
-        </span>
-
+    <footer class="bg-gray-800 text-white p-4 mt-6">
+        <span>&copy; 2025 by Your Company. All rights reserved.</span>
     </footer>
-
 
     <script src="https://cdn.plyr.io/3.6.12/plyr.js"></script>
     <script>
@@ -53,6 +56,7 @@
             'airplay',
             'fullscreen'
         ];
+        
         document.addEventListener('DOMContentLoaded', () => {
             const player = Plyr.setup('.player', { controls });
         });
@@ -61,8 +65,9 @@
         const footer = document.querySelector('footer');
         const toogle = document.querySelector('.toogle');
         toogle.onclick = () => {
-            body.classList.toggle('dark')
-            footer.classList.toggle('dark')
+            body.classList.toggle('bg-gray-900');
+            body.classList.toggle('text-white');
+            footer.classList.toggle('bg-gray-900');
         }
     </script>
 </body>
