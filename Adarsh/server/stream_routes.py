@@ -1,6 +1,3 @@
-# Taken from megadlbot_oss <https://github.com/eyaadh/megadlbot_oss/blob/master/mega/webserver/routes.py>
-# Thanks to Eyaadh <https://github.com/eyaadh>
-
 import re
 import time
 import math
@@ -19,33 +16,30 @@ from ..utils.custom_dl import ByteStreamer
 from Adarsh.utils.render_template import render_page
 from Adarsh.vars import Var
 
-
+# RouteTable
 routes = web.RouteTableDef()
 
 # Serve the homepage HTML
 @routes.get("/", allow_head=True)
 @aiohttp_jinja2.template('home.html')
+async def root_route_handler(request):
+    """Handler for the root route that renders the home template."""
+    # Pass dynamic data to the template
+    return {
+        "server_status": "running",
+        "uptime": get_readable_time(time.time() - StartTime),
+        "telegram_bot": "@" + StreamBot.username,
+        "connected_bots": len(multi_clients),
+        "loads": dict(
+            ("bot" + str(c + 1), l)
+            for c, (_, l) in enumerate(
+                sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
+            )
+        ),
+        "version": __version__,
+    }
 
-# @routes.get("/", allow_head=True)
-# async def root_route_handler(_):
-#     return web.json_response(
-#         {
-#             "server_status": "running",
-#             ""
-#             "uptime": get_readable_time(time.time() - StartTime),
-#             "telegram_bot": "@" + StreamBot.username,
-#             "connected_bots": len(multi_clients),
-#             "loads": dict(
-#                 ("bot" + str(c + 1), l)
-#                 for c, (_, l) in enumerate(
-#                     sorted(work_loads.items(), key=lambda x: x[1], reverse=True)
-#                 )
-#             ),
-#             "version": __version__,
-#         }
-#     )
-
-
+# Watch route for streaming content based on the URL
 @routes.get(r"/watch/{path:\S+}", allow_head=True)
 async def stream_handler(request: web.Request):
     try:
@@ -57,6 +51,8 @@ async def stream_handler(request: web.Request):
         else:
             id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
             secure_hash = request.rel_url.query.get("hash")
+        
+        # Return the rendered page for streaming
         return web.Response(text=await render_page(id, secure_hash), content_type='text/html')
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
@@ -68,8 +64,9 @@ async def stream_handler(request: web.Request):
         logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
 
+# General route for streaming media
 @routes.get(r"/{path:\S+}", allow_head=True)
-async def stream_handler(request: web.Request):
+async def media_streamer_handler(request: web.Request):
     try:
         path = request.match_info["path"]
         match = re.search(r"^([a-zA-Z0-9_-]{6})(\d+)$", path)
@@ -79,6 +76,7 @@ async def stream_handler(request: web.Request):
         else:
             id = int(re.search(r"(\d+)(?:\/\S+)?", path).group(1))
             secure_hash = request.rel_url.query.get("hash")
+        
         return await media_streamer(request, id, secure_hash)
     except InvalidHash as e:
         raise web.HTTPForbidden(text=e.message)
@@ -90,8 +88,10 @@ async def stream_handler(request: web.Request):
         logging.critical(e.with_traceback(None))
         raise web.HTTPInternalServerError(text=str(e))
 
+# Caching mechanism for clients and media streamers
 class_cache = {}
 
+# Media streamer function handling the byte data for streaming media
 async def media_streamer(request: web.Request, id: int, secure_hash: str):
     range_header = request.headers.get("Range", 0)
     
@@ -174,3 +174,28 @@ async def media_streamer(request: web.Request, id: int, secure_hash: str):
             "Accept-Ranges": "bytes",
         },
     )
+
+# Create the web app and set up jinja2 for template rendering
+async def web_server():
+    app = web.Application()
+
+    # Set up Jinja2 template rendering
+    aiohttp_jinja2.setup(app, loader=jinja2.FileSystemLoader('templates'))
+
+    # Register routes
+    app.add_routes(routes)
+
+    return app
+
+# Run the web server
+async def main():
+    app = await web_server()
+    runner = web.AppRunner(app)
+    await runner.setup()
+    site = web.TCPSite(runner, 'localhost', 8080)
+    print("Server is running on http://localhost:8080")
+    await site.start()
+
+if __name__ == "__main__":
+    import asyncio
+    asyncio.run(main())
