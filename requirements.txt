@@ -9,3 +9,5 @@ apscheduler
 requests
 psutil
 pyromod
+jinja2
+aiohttp-jinja2
